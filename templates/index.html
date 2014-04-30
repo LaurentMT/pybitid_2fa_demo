@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+{% block body %}
+<!-- START INDEX.HTML -->
+<div class="row">
+	<div class="col-xs-7 jumbotron">		
+		<h1>BitID 2FA</h1>
+		<div class="spacer40"></div>
+		<p class="lead">You can use BitId to secure your online accounts with a <a href="http://en.wikipedia.org/wiki/Two-step_verification">2FA</a>.</p> 
+		<div class="spacer40"></div>
+		<p class="lead">Please have your wallet ready !</p>
+	</div>
+	<div class="col-xs-5">
+		{% if session.auth %}
+			<div class="jumbotron">	
+				<p class="details">Two-step verification is a process involving two stages to verify the identity of an entity trying to access services in a computer or in a network. If each step involves a different authentication factor (knowledge factor, possession factor, inherence factor) then the two-step authentication is additionally two-factor authentication.</p> 
+				<div class="spacer50"></div>
+				<p class="btn"><a class="btn-lg btn-success" href="/sign_out" role="button">Log out</a></p>
+			</div>				
+		{% else %}
+			<table class="login-box">
+				<tbody>
+					<tr class="first-row">
+						<td colspan="2">
+							<input type="text" name="signin_login" id="signin_login" class="form-control" placeholder="Login">
+						</td>
+					</tr>
+					<tr class="interm-row">
+						<td colspan="2">
+							<input type="password" name="signin_password" id="signin_password" class="form-control" placeholder="Password">
+						</td>
+					</tr>
+					<tr class="last-row">
+						<td><a href="javascript:alert('Nothing to see here');">Forgot your password ?</a>
+						<td><button id="signin-btn" class="btn btn-success login-button" data-loading-text="Sign in">Sign in !</button></td>
+					</tr>
+				</tbody>
+			</table>
+			<div class="spacer20"></div>
+			<table class="login-box">
+				<tbody>
+					<tr class="first-row">
+						<td colspan="2"><p class="lead">New to BitId ? Sign up !</p></td>
+					</tr>
+					<tr class="interm-row">
+						<td><input type="text" name="signup_login" id="signup_login" class="form-control" placeholder="Login"></td>
+					</tr>
+					<tr class="interm-row">
+						<td><input type="text" name="signup_email" id="signup_email" class="form-control" placeholder="Email"></td>
+					</tr>
+					<tr class="interm-row">
+						<td><input type="password" name="signup_password" id="signup_password" class="form-control" placeholder="Password"></td>
+					</tr>
+					<tr class="last-row">
+						<td><button id="signup-btn" class="btn btn-success login-button" data-loading-text="Sign u">Sign up</button></td>
+					</tr>
+				</tbody>
+			</table>
+		{% endif %}
+	</div>
+</div>
+<script>
+$(function () {
+	$('#signin-btn').on('click', function() {
+	  	signIn();
+	});
+	$('#signup-btn').on('click', function() {
+		signUp();
+	});
+});
+
+function signIn() {
+	$("#signin-btn").button('loading');
+	$.ajax({
+		url: "{{ params_tpl['basic_auth_uri'] }}",
+		{% autoescape false %}
+		data: {login: $('#signin_login').val(), password: $('#signin_password').val()},
+		{% endautoescape %}
+		type: "post",
+		success: function(data) {
+			window.location = data.redirect_uri;
+		},
+		error: function(data) {
+			$("#signin-btn").button('reset');
+			alert("Error : " + JSON.parse(data.responseText).message);
+		}
+	});
+}
+
+function signUp() {
+	$("#signup-btn").button('loading');
+	$.ajax({
+		url: "{{ params_tpl['signup_uri'] }}",
+		{% autoescape false %}
+		data: {login: $('#signup_login').val(), password: $('#signup_password').val(), email: $('#signup_email').val()},
+		{% endautoescape %}
+		type: "post",
+		success: function(data) {
+			window.location = data.redirect_uri;
+		},
+		error: function(data) {
+			$("#signup-btn").button('reset');
+			alert("Error : " + JSON.parse(data.responseText).message);
+		}
+	});
+}
+</script>
+<!-- END INDEX.HTML -->
+{% endblock %}

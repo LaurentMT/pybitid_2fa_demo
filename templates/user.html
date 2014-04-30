@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block body %}
+<!-- START USER.HTML -->
+<div class="jumbotron">
+	{% if params_tpl['user_tfa'] %}
+		<h1>Hi {{ params_tpl['user_login'] }} !</h1>
+		<p>Sign in count : {{ params_tpl['user_signin_count'] }}</p>
+		<div class="spacer20"></div>
+		<p class="lead">Two-Factor Authentication is activated with address {{ params_tpl['user_tfa_address'] }}</p>
+		<p><a class="btn btn-lg btn-success" href="/sign_out" role="button">Log out</a></p>
+	{% else %}
+		<h1>Hi {{ params_tpl['user_login'] }} !</h1>
+		<p>Sign in count : {{ params_tpl['user_signin_count'] }}</p>
+		<div class="spacer20"></div>
+		<p class="lead">Keep your account secure with Two-Factor Authentication and BitId</p>
+		<div class="spacer20"></div>
+		<div class="btn-group">
+			<p class="btn"><a class="btn-lg btn-success" href="/tfa_activation" role="button">Activate 2FA</a></p>
+			<p class="btn"><a class="btn-lg btn-success" href="/sign_out" role="button">Log out</a></p>
+		</div>
+	{% endif %}
+</div>
+<!-- END USER.HTML -->
+{% endblock %}
