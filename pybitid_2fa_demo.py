@@ -49,6 +49,7 @@ def nocache(f):
 
 @app.route("/", methods=["GET"])
 @app.route("/home", methods=["GET"])
+@nocache
 def home():
     '''
     Prepares rendering of home page
@@ -71,6 +72,7 @@ def home():
 
 
 @app.route("/signup", methods=["POST"])
+@nocache
 def signup():
     '''
     Callback for validation of signup
@@ -123,6 +125,7 @@ def tfa_activation():
 
 
 @app.route("/tfa_activation_callback", methods=["POST"])
+@nocache
 def tfa_activation_callback():
     '''
     Callback for validation of bitid challenge during activation of 2FA
@@ -164,6 +167,7 @@ def tfa_challenge():
     
 
 @app.route("/tfa_callback", methods=["POST"])
+@nocache
 def tfa_callback():
     '''
     Callback for validation of bitid challenge during 2FA
@@ -188,6 +192,7 @@ def tfa_callback():
     
 
 @app.route("/basic_auth", methods=["POST"])
+@nocache
 def basic_auth():
     '''
     Checks basic authentication by login/password
