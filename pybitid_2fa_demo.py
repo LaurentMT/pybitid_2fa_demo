@@ -4,11 +4,13 @@ except ImportError:
     from urllib.parse import urlparse, urlunparse
 
 import uuid
+from datetime import datetime
+from functools import update_wrapper
 from werkzeug.utils import redirect
 from flask import Flask
 from flask.json import jsonify
 from flask.templating import render_template
-from flask.helpers import url_for
+from flask.helpers import url_for, make_response
 from flask.globals import session, request
 
 from pybitid import bitid
@@ -31,6 +33,18 @@ app.secret_key = '\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5\xa2\xa0\x9fR"\xa1
 # For this toy project we use fake dbs storing data in memory
 nonce_db_service = FakeNonceDbService()
 user_db_service = FakeUserDbService()
+
+
+# NoCache decorator 
+# Required to fix a problem with IE which caches all XMLHttpRequest responses 
+def nocache(f):
+    def add_nocache(*args, **kwargs):
+        resp = make_response(f(*args, **kwargs))
+        resp.headers.add('Last-Modified', datetime.now())
+        resp.headers.add('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0')
+        resp.headers.add('Pragma', 'no-cache')
+        return resp
+    return update_wrapper(add_nocache, f)
 
 
 @app.route("/", methods=["GET"])
@@ -91,6 +105,7 @@ def signup():
 
 
 @app.route("/tfa_activation", methods=["GET"])
+@nocache
 def tfa_activation():
     '''
     Prepares a bitid challenge for activation of 2FA
@@ -131,6 +146,7 @@ def tfa_activation_callback():
 
 
 @app.route("/tfa_challenge", methods=["GET"])
+@nocache
 def tfa_challenge():
     '''
     Prepares a bitid challenge for 2FA
@@ -205,6 +221,7 @@ def basic_auth():
 
 
 @app.route("/tfa_auth", methods=["GET"])
+@nocache
 def tfa_auth():
     '''
     Checks if a bitid challenge has been validated
@@ -212,7 +229,7 @@ def tfa_auth():
     '''
     # Checks that session id is set
     if not session["sid"]:
-        return jsonify(auth = 0)
+        return jsonify(auth = 0)     
     # Gets the nonce associated to the session id
     nonce = nonce_db_service.get_nonce_by_sid(session["sid"])
     if nonce is None: return jsonify(auth = 0)
@@ -232,6 +249,7 @@ def tfa_auth():
 
 
 @app.route("/user", methods=["GET"])
+@nocache
 def user():
     '''
     Prepares rendering of /user page
@@ -251,6 +269,7 @@ def user():
 
 
 @app.route("/sign_out", methods=["GET"])
+@nocache
 def sign_out():
     '''
     Sign out
@@ -324,7 +343,7 @@ def check_signature(callback_uri):
         return (False, None, address, "NONCE has expired")
     # Everything is  ok
     return (True, nonce, address, "")
-
+    
 
 if __name__ == "__main__":
     # Comment/uncomment following lines to switch production / debug mode
