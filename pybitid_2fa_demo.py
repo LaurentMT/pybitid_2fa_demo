@@ -112,27 +112,21 @@ def tfa_activation_callback():
     '''
     Callback for validation of bitid challenge during activation of 2FA
     '''
-    # Checks that user is already authenticated
-    if not session.get("auth", False): return redirect(url_for("home")), 401  
     # Retrieves the callback uri
     callback_uri = get_callback_uri("/tfa_activation_callback")
     # Checks the signature
     (sig_ok, nonce, address, msg) = check_signature(callback_uri)
-    if not sig_ok:
-        return jsonify(message = msg), 401
+    if not sig_ok: return jsonify(message = msg), 401
     # Gets the user from db
-    user = user_db_service.get_user_by_uid(session.get("uid", ""))
-    if user is None: 
-        return jsonify(message = "Ooops ! Something went wrong"), 500
-    # Registers the address as the 2FA address in db
+    user = user_db_service.get_user_by_uid(nonce.uid)
+    if user is None: return jsonify(message = "Ooops ! Something went wrong"), 500
+    # Registers the address as user's 2FA address in db
     user.set_tfa_address(address)
     user_db_service.update_user(user)
-    # To finalize the authentication, let's set the user id in the nonce and update it in db
-    nonce.uid = user.uid
+    # Finalizes authentication: Stores address and redirection uri in the nonce
+    nonce.tfa_address = address
     nonce.redirect_uri = url_for("user")
-    if not nonce_db_service.update_nonce(nonce):
-        return jsonify(message = "Ooops ! Something went wrong"), 500
-    # Everything was ok: user is authenticated
+    if not nonce_db_service.update_nonce(nonce): return jsonify(message = "Ooops ! Something went wrong"), 500
     return jsonify(address = address, nonce = nonce.sid)       
 
 
@@ -158,25 +152,22 @@ def tfa_callback():
     '''
     Callback for validation of bitid challenge during 2FA
     '''
-    # Checks that user has passed basic authentication
-    if not session.get("uid", ""): return redirect(url_for("home")), 401
     # Retrieves the callback uri
     callback_uri = get_callback_uri("/tfa_callback")
     # Checks the signature
     (sig_ok, nonce, address, msg) = check_signature(callback_uri)
     if not sig_ok: return jsonify(message = msg), 401
     # Gets the user from db
-    user = user_db_service.get_user_by_uid(session.get("uid", ""))
+    user = user_db_service.get_user_by_uid(nonce.uid)
     if user is None: return jsonify(message = "Ooops ! Something went wrong"), 500
     # Checks that user has activated 2FA
     if not user.tfa_activited(): return jsonify(message = "2FA is not activated for this account"), 500
     # Checks that address used for challenge matches with address associated to the user
     if not address == user.get_tfa_address(): return jsonify(message = "Invalid address"), 500
-    # To finalize the authentication, let's set the user id in the nonce and update it in db
-    nonce.uid = user.uid
+    # Finalizes authentication: Stores address and redirection uri in the nonce
+    nonce.tfa_address = address
     nonce.redirect_uri = url_for("user")
     if not nonce_db_service.update_nonce(nonce): return jsonify(message = "Ooops ! Something went wrong"), 500
-    # Everything was ok: user is authenticated
     return jsonify(address = address, nonce = nonce.sid)      
     
 
@@ -225,8 +216,8 @@ def tfa_auth():
     # Gets the nonce associated to the session id
     nonce = nonce_db_service.get_nonce_by_sid(session["sid"])
     if nonce is None: return jsonify(auth = 0)
-    # Checks if nonce has an associated user id
-    if nonce.uid is None: return jsonify(auth = 0)
+    # Checks if the nonce has a user id and a 2fa address associated
+    if (nonce.uid is None) or (nonce.tfa_address is None): return jsonify(auth = 0)
     # Gets the user from db
     user = user_db_service.get_user_by_uid(nonce.uid)
     if user is None: return jsonify(auth = 0)
@@ -280,6 +271,7 @@ def escape_slash_filter(s):
 def prepare_bitid_challenge(callback_uri):
     # Creates a new nonce associated to this session
     nonce = Nonce(session["sid"])
+    nonce.uid = session.get("uid", None)
     # Stores the nonce in database
     nonce_db_service.create_nonce(nonce)
     # Builds the challenge (bitid uri) 

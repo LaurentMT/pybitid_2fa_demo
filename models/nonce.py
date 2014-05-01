@@ -24,6 +24,8 @@ class Nonce(object):
         self.created = datetime.now()
         # Sets the redirect uri
         self.redirect_uri = ""
+        # Sets the bitcoin address used for 2fa
+        self.tfa_address = None
         
     
     def has_expired(self):
