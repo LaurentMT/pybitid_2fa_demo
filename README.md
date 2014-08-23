@@ -4,6 +4,8 @@ A python demo application of 2-Factor Authentication with the BitId protocol.
 
 The goal of this toy project is to illustrate how BitId can be used to implement 2FA in addition to a basic authentication system (by login/password).
 
+Live demo: http://vps90685.ovh.net:8081/
+
 
 ## Python versions
 
@@ -20,8 +22,8 @@ pip install flask
 PyBitId (https://github.com/LaurentMT/pybitid) - A python library for the BitId protocol
 ```
 Gets the library from Github : https://github.com/LaurentMT/pybitid/archive/master.zip
-Unzips the archive in root directory of the demo
-Renames the "pybitid-master" directory in "pybitid"
+Unzips the archive in a temp directory
+python setup.py install
 ```
 
 
